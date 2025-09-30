@@ -1,4 +1,3 @@
-import os
 import time
 import random
 from selenium import webdriver
@@ -8,8 +7,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
-USERNAME = os.environ.get("MTT_USERNAME")
-PASSWORD = os.environ.get("MTT_PASSWORD")
+# Your YouTube channel ID for My Tools Town
+YOUTUBE_CHANNEL_URL = "https://www.youtube.com/channel/UC0_POCFlmtlMG-KkRPP_oAg"
 
 def setup_driver():
     options = webdriver.ChromeOptions()
@@ -19,22 +18,10 @@ def setup_driver():
     options.add_argument("--window-size=1920,1080")
     return webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-def login_and_navigate_youtube(driver):
-    driver.get("https://mytoolstown.com/youtube")  # Use the actual YouTube section URL
-
-    # If login fields appear, fill them
-    try:
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "username"))).send_keys(USERNAME)
-        driver.find_element(By.NAME, "password").send_keys(PASSWORD)
-        driver.find_element(By.CSS_SELECTOR, "button[type=submit]").click()
-        print("[+] Logged in via YouTube URL")
-        time.sleep(5)  # wait for page to load after login
-    except:
-        print("[+] Already logged in or login not required")
-
-    # Wait for tasks to load
+def go_to_youtube_section(driver):
+    driver.get("https://mytoolstown.com/youtube")  # My Tools Town YouTube section URL
     WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".task-button")))
-    print("[+] YouTube tasks page ready")
+    print("[+] YouTube tasks page loaded")
 
 def complete_tasks(driver, max_tasks=5):
     tasks_done = 0
@@ -47,24 +34,23 @@ def complete_tasks(driver, max_tasks=5):
 
             task = task_buttons[0]
             driver.execute_script("arguments[0].scrollIntoView(true);", task)
-            task.click()
-            print(f"[+] Task {tasks_done+1} clicked")
 
-            wait_time = random.randint(20, 35)
-            print(f"[~] Waiting {wait_time} seconds to mimic watch time...")
+            # Paste YouTube channel URL if required
+            try:
+                input_box = task.find_element(By.CSS_SELECTOR, "input[type='text']")
+                input_box.clear()
+                input_box.send_keys(YOUTUBE_CHANNEL_URL)
+            except:
+                print("[~] No input box found, continuing")
+
+            task.click()
+            print(f"[+] Task {tasks_done+1} completed")
+
+            wait_time = random.randint(5, 10)
             time.sleep(wait_time)
 
-            try:
-                confirm = WebDriverWait(driver, 10).until(
-                    EC.element_to_be_clickable((By.CSS_SELECTOR, ".confirm-button"))
-                )
-                confirm.click()
-                print(f"[+] Credits claimed for task {tasks_done+1}")
-            except:
-                print("[!] Could not find confirm button (maybe auto-credited)")
-
             tasks_done += 1
-            time.sleep(random.randint(5, 10))
+            time.sleep(random.randint(2, 5))
 
         except Exception as e:
             print("[!] Error performing task:", e)
@@ -73,8 +59,8 @@ def complete_tasks(driver, max_tasks=5):
 def main():
     driver = setup_driver()
     try:
-        login_and_navigate_youtube(driver)
-        complete_tasks(driver, max_tasks=5)  # adjust max_tasks if you want more per run
+        go_to_youtube_section(driver)
+        complete_tasks(driver, max_tasks=5)  # Adjust max_tasks per run
     finally:
         driver.quit()
 
