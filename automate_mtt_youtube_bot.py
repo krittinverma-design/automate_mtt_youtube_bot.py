@@ -1,70 +1,72 @@
 import time
-import random
+import traceback
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 
-# Your YouTube channel ID for My Tools Town
+# YouTube channel link
 YOUTUBE_CHANNEL_URL = "https://www.youtube.com/channel/UC0_POCFlmtlMG-KkRPP_oAg"
 
 def setup_driver():
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
+    options = Options()
+    options.add_argument("--headless")  # Run in headless mode
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--window-size=1920,1080")
-    return webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    options.add_argument("--remote-debugging-port=9222")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-logging")
+    options.add_argument("--log-level=3")
+    options.add_argument("--disable-features=VizDisplayCompositor")
+    options.add_argument("--disable-hang-monitor")
+    options.add_argument("--disable-breakpad")
+    options.add_argument("--disable-client-side-phishing-detection")
+    options.add_argument("--disable-default-apps")
+    options.add_argument("--disable-translate")
+    options.add_argument("--disable-plugins-discovery")
+    options.add_argument("--disable-sync")
+    options.add_argument("--metrics-recording-only")
+    options.add_argument("--mute-audio")
+    options.add_argument("--no-first-run")
+    options.add_argument("--no-service-autorun")
+    options.add_argument("--password-store=basic")
+    options.add_argument("--use-mock-keychain")
 
-def go_to_youtube_section(driver):
-    driver.get("https://mytoolstown.com/youtube")  # My Tools Town YouTube section URL
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    return driver
+
+def login(driver):
+    driver.get("https://mytoolstown.com/youtube")
+    WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[name='channel']")))
+    channel_input = driver.find_element(By.CSS_SELECTOR, "input[name='channel']")
+    channel_input.clear()
+    channel_input.send_keys(YOUTUBE_CHANNEL_URL)
+    channel_input.send_keys(Keys.RETURN)
+
+def earn_credits(driver):
     WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".task-button")))
-    print("[+] YouTube tasks page loaded")
-
-def complete_tasks(driver, max_tasks=5):
-    tasks_done = 0
     task_buttons = driver.find_elements(By.CSS_SELECTOR, ".task-button")
-    
-    for task in task_buttons:
-        if tasks_done >= max_tasks:
-            break
-
+    for button in task_buttons:
         try:
-            # Skip task if already marked completed (you may need to adjust selector)
-            if "completed" in task.get_attribute("class").lower():
-                print("[~] Task already completed, skipping")
-                continue
-
-            driver.execute_script("arguments[0].scrollIntoView(true);", task)
-
-            # Paste YouTube channel URL if required
-            try:
-                input_box = task.find_element(By.CSS_SELECTOR, "input[type='text']")
-                input_box.clear()
-                input_box.send_keys(YOUTUBE_CHANNEL_URL)
-            except:
-                print("[~] No input box found, continuing")
-
-            task.click()
-            print(f"[+] Task {tasks_done+1} completed")
-
-            wait_time = random.randint(5, 10)
-            time.sleep(wait_time)
-
-            tasks_done += 1
-            time.sleep(random.randint(2, 5))
-
+            driver.execute_script("arguments[0].click();", button)
+            time.sleep(2)  # Adjust sleep time as necessary
         except Exception as e:
-            print("[!] Error performing task:", e)
-            continue
+            print(f"Error clicking task button: {e}")
 
 def main():
     driver = setup_driver()
     try:
-        go_to_youtube_section(driver)
-        complete_tasks(driver, max_tasks=5)  # Adjust max_tasks per run
+        login(driver)
+        earn_credits(driver)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        traceback.print_exc()
     finally:
         driver.quit()
 
