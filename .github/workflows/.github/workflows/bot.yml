@@ -2,7 +2,7 @@ name: MyToolsTown YouTube Bot
 
 on:
   schedule:
-    - cron: "*/1 * * * *"   # Runs every 30 minutes
+    - cron: "*/5 * * * *"   # Runs every 5 minutes
   workflow_dispatch:          # Allows manual trigger
 
 jobs:
@@ -17,7 +17,7 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Chrome
+      - name: Install Chrome & Chromedriver
         run: |
           sudo apt-get update
           sudo apt-get install -y chromium-browser chromium-chromedriver
@@ -26,7 +26,4 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run bot
-        env:
-          MTT_USERNAME: ${{ secrets.MTT_USERNAME }}
-          MTT_PASSWORD: ${{ secrets.MTT_PASSWORD }}
         run: python automate_mtt_youtube_bot.py
