@@ -25,14 +25,18 @@ def go_to_youtube_section(driver):
 
 def complete_tasks(driver, max_tasks=5):
     tasks_done = 0
-    while tasks_done < max_tasks:
-        try:
-            task_buttons = driver.find_elements(By.CSS_SELECTOR, ".task-button")
-            if not task_buttons:
-                print("[!] No more tasks found")
-                break
+    task_buttons = driver.find_elements(By.CSS_SELECTOR, ".task-button")
+    
+    for task in task_buttons:
+        if tasks_done >= max_tasks:
+            break
 
-            task = task_buttons[0]
+        try:
+            # Skip task if already marked completed (you may need to adjust selector)
+            if "completed" in task.get_attribute("class").lower():
+                print("[~] Task already completed, skipping")
+                continue
+
             driver.execute_script("arguments[0].scrollIntoView(true);", task)
 
             # Paste YouTube channel URL if required
@@ -54,7 +58,7 @@ def complete_tasks(driver, max_tasks=5):
 
         except Exception as e:
             print("[!] Error performing task:", e)
-            break
+            continue
 
 def main():
     driver = setup_driver()
