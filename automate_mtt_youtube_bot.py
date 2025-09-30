@@ -19,18 +19,22 @@ def setup_driver():
     options.add_argument("--window-size=1920,1080")
     return webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-def login(driver):
-    driver.get("https://mytoolstown.com/login")
-    WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.NAME, "username"))).send_keys(USERNAME)
-    driver.find_element(By.NAME, "password").send_keys(PASSWORD)
-    driver.find_element(By.CSS_SELECTOR, "button[type=submit]").click()
-    WebDriverWait(driver, 20).until(EC.url_contains("dashboard"))
-    print("[+] Logged in successfully")
+def login_and_navigate_youtube(driver):
+    driver.get("https://mytoolstown.com/youtube")  # Use the actual YouTube section URL
 
-def navigate_to_youtube(driver):
-    driver.get("https://mytoolstown.com/youtube")
+    # If login fields appear, fill them
+    try:
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "username"))).send_keys(USERNAME)
+        driver.find_element(By.NAME, "password").send_keys(PASSWORD)
+        driver.find_element(By.CSS_SELECTOR, "button[type=submit]").click()
+        print("[+] Logged in via YouTube URL")
+        time.sleep(5)  # wait for page to load after login
+    except:
+        print("[+] Already logged in or login not required")
+
+    # Wait for tasks to load
     WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".task-button")))
-    print("[+] YouTube tasks page loaded")
+    print("[+] YouTube tasks page ready")
 
 def complete_tasks(driver, max_tasks=5):
     tasks_done = 0
@@ -69,9 +73,8 @@ def complete_tasks(driver, max_tasks=5):
 def main():
     driver = setup_driver()
     try:
-        login(driver)
-        navigate_to_youtube(driver)
-        complete_tasks(driver, max_tasks=5)
+        login_and_navigate_youtube(driver)
+        complete_tasks(driver, max_tasks=5)  # adjust max_tasks if you want more per run
     finally:
         driver.quit()
 
